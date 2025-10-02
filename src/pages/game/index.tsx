@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getRandom } from "@/lib/helper";
 import words from "@/data/words.json";
 import { ArrowLeft } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { Link, useParams } from "react-router-dom";
 
 export default function GamePage() {
   let { difficulty = "easy" } = useParams();
