@@ -14,6 +14,9 @@ export default function GamePage() {
   if (["easy", "medium", "hard"].includes(difficulty) === false) {
     difficulty = "easy";
   }
+  const categories = Object.keys(
+    words[difficulty as "easy" | "medium" | "hard"]
+  );
   const wordList =
     words[difficulty as "easy" | "medium" | "hard"] ?? words["easy"];
 
@@ -27,8 +30,10 @@ export default function GamePage() {
     "right-leg",
   ];
 
+  const [category, setCategory] = useState(getRandom(categories) as string);
   const [originalWord, setOriginalWord] = useState(
-    getRandom(wordList).toUpperCase()
+    // @ts-ignore
+    getRandom(wordList[category]).toUpperCase()
   );
   const [decodedWord, setDecodedWord] = useState("");
   const [disabledKeys, setDisabledKeys] = useState("");
@@ -88,10 +93,20 @@ export default function GamePage() {
     });
   }
 
+  /**
+   * Handles the restart button click event.
+   * Resets the game state to 'playing', generates a new random word
+   * and resets the lives and disabled keys.
+   * If the previous game state was 'lost', resets the streak to 0.
+   */
   function handleRestart() {
-    let newWord = getRandom(wordList).toUpperCase();
+    const category = getRandom(categories);
+    setCategory(category);
+    // @ts-ignore
+    let newWord = getRandom(wordList[category]).toUpperCase();
     while (newWord === originalWord) {
-      newWord = getRandom(wordList).toUpperCase();
+      // @ts-ignore
+      newWord = getRandom(wordList[category]).toUpperCase();
     }
     setOriginalWord(newWord);
     setDisabledKeys("");
@@ -136,6 +151,9 @@ export default function GamePage() {
       <div className="w-screen h-screen px-8 flex flex-col justify-center items-center gap-8">
         <div className="absolute right-8 bottom-4">Streak: {streak}</div>
         <Hangman hiddenParts={hiddenParts} />
+        <div className="capitalize text-2xl font-bold">
+          {category.replaceAll("_", " ")}
+        </div>
         <Output />
         {gameState === "playing" ? (
           <Keyboard disabledKeys={disabledKeys} onClick={handleKeyClick} />
