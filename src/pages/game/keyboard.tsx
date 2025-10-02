@@ -17,7 +17,7 @@ export default function Keyboard({ disabledKeys, onClick }: KeyboardProps) {
               onClick={() => onClick?.(key)}
               disabled={disabledKeys?.includes(key)}
               key={key}
-              className="text-2xl w-6 font-black font-mono disabled:text-muted-foreground"
+              className="text-2xl w-6 font-black font-mono disabled:text-muted"
             >
               {key}
             </button>

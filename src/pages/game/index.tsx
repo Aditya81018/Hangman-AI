@@ -7,9 +7,16 @@ import { Button } from "@/components/ui/button";
 import { getRandom } from "@/lib/helper";
 import words from "@/data/words.json";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
 
 export default function GamePage() {
+  let { difficulty = "easy" } = useParams();
+  if (["easy", "medium", "hard"].includes(difficulty) === false) {
+    difficulty = "easy";
+  }
+  const wordList =
+    words[difficulty as "easy" | "medium" | "hard"] ?? words["easy"];
+
   const parts: Parts[] = [
     "rope",
     "face",
@@ -21,12 +28,12 @@ export default function GamePage() {
   ];
 
   const [originalWord, setOriginalWord] = useState(
-    getRandom(words).toUpperCase()
+    getRandom(wordList).toUpperCase()
   );
   const [decodedWord, setDecodedWord] = useState("");
   const [disabledKeys, setDisabledKeys] = useState("");
   const [lives, setLives] = useState(parts.length);
-  const [hiddenParts, setHiddenParts] = useState<Parts[]>([]);
+  const [hiddenParts, setHiddenParts] = useState<Parts[]>(parts);
   const [gameState, setGameState] = useState<"playing" | "won" | "lost">(
     "playing"
   );
@@ -82,9 +89,9 @@ export default function GamePage() {
   }
 
   function handleRestart() {
-    let newWord = getRandom(words).toUpperCase();
+    let newWord = getRandom(wordList).toUpperCase();
     while (newWord === originalWord) {
-      newWord = getRandom(words).toUpperCase();
+      newWord = getRandom(wordList).toUpperCase();
     }
     setOriginalWord(newWord);
     setDisabledKeys("");

@@ -41,73 +41,114 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Palette (oklch conversions) */
 :root {
+  --barn-red: oklch(0.321 0.184 29.23); /* #780000 */
+  --fire-brick: oklch(0.501 0.234 29.38); /* #c1121f */
+  --papaya-whip: oklch(0.947 0.034 96.67); /* #fdf0d5 */
+  --prussian-blue: oklch(0.265 0.071 246.75); /* #003049 */
+  --air-superiority-blue: oklch(0.692 0.082 241.57); /* #669bbc */
+
+  /* Theme variables (light) */
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  --background: var(--papaya-whip);
+  --foreground: var(--prussian-blue);
+
+  --card: var(--papaya-whip);
+  --card-foreground: var(--prussian-blue);
+
+  --popover: var(--papaya-whip);
+  --popover-foreground: var(--prussian-blue);
+
+  --primary: var(--barn-red);
+  --primary-foreground: var(--papaya-whip);
+
+  --secondary: var(--air-superiority-blue);
+  --secondary-foreground: var(--papaya-whip);
+
+  --muted: var(--air-superiority-blue);
+  --muted-foreground: var(--prussian-blue);
+
+  --accent: var(--fire-brick);
+  --accent-foreground: var(--papaya-whip);
+
+  --destructive: var(--fire-brick);
+
+  /* subtle UI surfaces / strokes */
+  --border: var(--air-superiority-blue);
+  --input: oklch(0.692 0.082 241.57 / 0.4); /* softer input fill */
+  --ring: var(--barn-red);
+
+  /* Charts (distinct, spread across palette) */
+  --chart-1: var(--barn-red);
+  --chart-2: var(--fire-brick);
+  --chart-3: var(--prussian-blue);
+  --chart-4: var(--air-superiority-blue);
+  --chart-5: var(--papaya-whip);
+
+  /* Sidebar */
+  --sidebar: var(--papaya-whip);
+  --sidebar-foreground: var(--prussian-blue);
+  --sidebar-primary: var(--barn-red);
+  --sidebar-primary-foreground: var(--papaya-whip);
+  --sidebar-accent: var(--air-superiority-blue);
+  --sidebar-accent-foreground: var(--papaya-whip);
+  --sidebar-border: oklch(0.692 0.082 241.57 / 0.5);
+  --sidebar-ring: var(--barn-red);
 }
 
+/* Dark theme — all same variable names (keeps callers consistent) */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Palette are read from :root vars; theme variables override only roles */
+  --background: var(--prussian-blue);
+  --foreground: var(--papaya-whip);
+
+  --card: var(--barn-red);
+  --card-foreground: var(--papaya-whip);
+
+  --popover: var(--barn-red);
+  --popover-foreground: var(--papaya-whip);
+
+  /* swap role emphasis for dark mode: blue primary for high contrast on dark bg */
+  --primary: var(--air-superiority-blue);
+  --primary-foreground: var(--prussian-blue);
+
+  --secondary: var(--papaya-whip);
+  --secondary-foreground: var(--prussian-blue);
+
+  --muted: var(--air-superiority-blue);
+  --muted-foreground: var(--papaya-whip);
+
+  --accent: var(--barn-red);
+  --accent-foreground: var(--papaya-whip);
+
+  --destructive: var(--fire-brick);
+
+  /* subtle UI surfaces / strokes for dark */
+  --border: oklch(0.947 0.034 96.67 / 0.1); /* faint light stroke */
+  --input: oklch(0.947 0.034 96.67 / 0.15);
+  --ring: var(--fire-brick);
+
+  /* Charts (re-ordered for visibility on dark) */
+  --chart-1: var(--air-superiority-blue);
+  --chart-2: var(--papaya-whip);
+  --chart-3: var(--barn-red);
+  --chart-4: var(--fire-brick);
+  --chart-5: var(--prussian-blue);
+
+  /* Sidebar */
+  --sidebar: var(--barn-red);
+  --sidebar-foreground: var(--papaya-whip);
+  --sidebar-primary: var(--air-superiority-blue);
+  --sidebar-primary-foreground: var(--papaya-whip);
+  --sidebar-accent: var(--papaya-whip);
+  --sidebar-accent-foreground: var(--prussian-blue);
+  --sidebar-border: oklch(0.947 0.034 96.67 / 0.1);
+  --sidebar-ring: var(--fire-brick);
+
+  /* keep radius in dark too (callers expect it present) */
+  --radius: 0.625rem;
 }
 
 @layer base {

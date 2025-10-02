@@ -7,11 +7,23 @@ export default function HomePage() {
     <div className="flex flex-col gap-8 w-screen h-screen items-center justify-center">
       <div className="text-4xl">Hangman</div>
 
-      <Link to={"/game"}>
-        <Button size="lg" className="px-16">
-          Play
-        </Button>
-      </Link>
+      <div className="flex gap-4 max-md:flex-col">
+        <Link to={"/game/easy"}>
+          <Button size="lg" className="px-16">
+            Easy
+          </Button>
+        </Link>
+        <Link to={"/game/medium"}>
+          <Button size="lg" className="px-16">
+            Medium
+          </Button>
+        </Link>
+        <Link to={"/game/hard"}>
+          <Button size="lg" className="px-16">
+            Hard
+          </Button>
+        </Link>
+      </div>
       <ModeToggle />
     </div>
   );
