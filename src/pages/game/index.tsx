@@ -6,8 +6,8 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 // import { getRandom } from "@/lib/helper";
 // import words from "@/data/words.json"; // REMOVE STATIC WORDS IMPORT
-import { ArrowLeft } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { generateHangmanWords } from "@/services/genai";
 
 // Define the type for the AI-generated word object
@@ -27,7 +27,9 @@ export default function GamePage() {
     "left-leg",
     "right-leg",
   ];
-  const { difficulty } = useParams();
+  const { difficulty = "medium" } = useParams();
+  const [searchParams] = useSearchParams();
+  const instructions = searchParams.get("instructions");
 
   const [wordBatch, setWordBatch] = useState<HangmanWordObject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function GamePage() {
     console.log(`Fetching new batch`);
     try {
       const newWords = await generateHangmanWords(
-        `Set of completely random words for hangman, the difficulty is ${difficulty}`,
+        `Set of unique and random words for hangman, the difficulty is ${difficulty}. ${instructions}`,
         wordBatch.map((e) => e.word)
       );
       setWordBatch((words) => [...words, ...newWords]);
@@ -91,6 +93,8 @@ export default function GamePage() {
         word: newWord,
         hint: newHint,
       } = wordBatch[level - 1];
+
+      console.log("ran");
 
       // Update all word-related state
       setCategory(newCategory);
@@ -194,10 +198,12 @@ export default function GamePage() {
   if (isLoading || originalWord === "") {
     return (
       <div className="w-screen h-screen flex flex-col justify-center items-center">
+        <Loader2 className="animate-spin mb-8" />
         <div className="text-xl font-bold">
           Generating a fresh batch of words...
         </div>
         <div className="text-sm text-muted">This may take a moment.</div>
+        <ModeToggle />
       </div>
     );
   }
@@ -209,32 +215,41 @@ export default function GamePage() {
           <ArrowLeft />
         </Button>
       </Link>
-      <div className="w-screen h-screen px-8 flex flex-col justify-center items-center gap-8">
+      <div className="w-screen h-screen px-8 flex flex-col justify-evenly items-center gap-8">
         <div className="font-bold text-2xl text-center">Level {level}</div>
-        <Hangman hiddenParts={hiddenParts} />
-        <div className="capitalize text-2xl font-bold">
-          {category.replaceAll("_", " ")}
-        </div>
-        <div className="text-sm text-muted font-mono -mt-6 text-center">
-          {hint}
-        </div>
-        <Output />
-        {gameState === "playing" ? (
-          <Keyboard disabledKeys={disabledKeys} onClick={handleKeyClick} />
-        ) : gameState === "won" ? (
-          <div className="flex flex-col gap-4 items-center justify-center">
-            <div className="text-4xl font-bold uppercase">YOU WON 🎉</div>
-            <Button onClick={handleRestart}>Next Word</Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4 items-center justify-center">
-            <div className="text-4xl font-bold uppercase">GAME OVER 💀</div>
-            <div>
-              The word was: <span className="font-bold">{originalWord}</span>
+        <div className="flex gap-8 items-center justify-evenly lg:flex-row-reverse flex-col w-full">
+          <Hangman hiddenParts={hiddenParts} />
+          <div className="flex flex-col gap-8 items-center lg:w-md">
+            <div className="capitalize text-2xl font-bold">
+              {category.replaceAll("_", " ")}
             </div>
-            <Button onClick={handleRestart}>Restart</Button>
+            <div className="text-sm text-muted font-mono -mt-6 text-center">
+              {hint}
+            </div>
+            <Output />
+            {gameState === "playing" || gameState === "waiting" ? (
+              <Keyboard disabledKeys={disabledKeys} onClick={handleKeyClick} />
+            ) : gameState === "won" ? (
+              <div className="flex flex-col gap-4 items-center justify-center">
+                <div className="text-4xl font-bold uppercase">YOU WON 🎉</div>
+                <Button onClick={handleRestart}>Next Word</Button>
+              </div>
+            ) : (
+              gameState === "lost" && (
+                <div className="flex flex-col gap-4 items-center justify-center">
+                  <div className="text-4xl font-bold uppercase">
+                    GAME OVER 💀
+                  </div>
+                  <div>
+                    The word was:{" "}
+                    <span className="font-bold">{originalWord}</span>
+                  </div>
+                  <Button onClick={handleRestart}>Restart</Button>
+                </div>
+              )
+            )}
           </div>
-        )}
+        </div>
         <ModeToggle />
       </div>
     </>

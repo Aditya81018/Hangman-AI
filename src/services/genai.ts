@@ -79,7 +79,8 @@ export async function generateHangmanWords(
         },
         word: {
           type: "string",
-          description: "The secret word for the hangman game.",
+          description:
+            "The secret word for the hangman game. Can be phrases or 2 to 3 words too. Must only contain alphabets and spaces.",
         },
         hint: {
           type: "string",

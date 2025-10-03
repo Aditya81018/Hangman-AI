@@ -1,8 +1,12 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function HomePage() {
+  const [instructions, setInstructions] = useState("");
   return (
     <div className="flex flex-col gap-8 w-screen h-screen items-center justify-center">
       <div className="text-4xl">Hangman</div>
@@ -24,6 +28,20 @@ export default function HomePage() {
           </Button>
         </Link>
       </div>
+
+      <Textarea
+        className="w-full max-w-2xl"
+        placeholder="Enter custom instructions here..."
+        onChange={(e) => setInstructions(e.target.value)}
+        value={instructions}
+      />
+
+      <Link to={`/game/custom?instructions=${instructions}`}>
+        <Button size="lg" className="px-16">
+          Custom
+        </Button>
+      </Link>
+
       <ModeToggle />
     </div>
   );
