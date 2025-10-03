@@ -178,19 +178,38 @@ export default function GamePage() {
    * ... (This remains the same)
    */
   function Output() {
+    // 1. Split the original word by space to get individual words/segments.
+    const wordSegments = originalWord.split(" ");
+
+    // 2. Split the decoded word by space to map letters correctly.
+    const decodedSegments = decodedWord.split(" ");
+
     return (
-      <div className="flex gap-1">
-        {decodedWord.split("").map((letter, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex border-b-2 font-mono px-2 pb-2 items-center justify-center w-4 h-4",
-              letter === " " && "invisible"
-            )}
-          >
-            {letter !== "_" && letter}
-          </div>
-        ))}
+      // Use 'flex flex-wrap' on the outer container to allow the segments to wrap
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-4">
+        {wordSegments.map((_originalSegment, segmentIndex) => {
+          // Get the corresponding decoded segment
+          const decodedSegment = decodedSegments[segmentIndex] || "";
+
+          return (
+            // This div represents one entire word/segment and allows it to wrap to the next line
+            // if the previous segments don't fit. We don't need 'flex-wrap' here,
+            // just the individual letters.
+            <div key={`segment-${segmentIndex}`} className="flex gap-1">
+              {decodedSegment.split("").map((letter, letterIndex) => (
+                <div
+                  key={`segment-${segmentIndex}-letter-${letterIndex}`}
+                  className={cn(
+                    // Removed fixed w-4/h-4 if it was causing overflow, relying on padding/border
+                    "flex border-b-2 font-mono px-2 items-center justify-center w-6 h-6 text-xl"
+                  )}
+                >
+                  {letter !== "_" && letter}
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
     );
   }

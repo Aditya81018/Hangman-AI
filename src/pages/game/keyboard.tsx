@@ -3,7 +3,7 @@ interface KeyboardProps {
   onClick?: (key: string) => void;
 }
 
-const keysMatrix = "QWERTYUIOP\nASDFGHJKL\nZXCVBNM"
+const keysMatrix = "1234567890\nQWERTYUIOP\nASDFGHJKL\nZXCVBNM"
   .split("\n")
   .map((row) => row.split(""));
 
