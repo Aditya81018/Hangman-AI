@@ -11,48 +11,84 @@ interface HangmanWordObject {
 }
 
 /**
- * Generates a unique, tricky, and clever hinting text for a hangman word.
- * The hint will be designed to be misleading while still subtly pointing to the original word.
- * * @param originalWord The secret word for the hangman game.
- * @returns A promise that resolves to the generated hint text.
+ * Generates 6 new, highly personalized custom instruction suggestions by closely
+ * aligning them with the user's historical interests, while maintaining broad scope
+ * and the fun Theme + Hint Modification structure.
+ * * * @param history A string array of past instructions used by the user.
+ * @returns A promise that resolves to a string array of 6 new instruction suggestions.
  */
-export async function generateTrickyHint(
-  originalWord: string
-): Promise<string> {
+export async function suggestCustomInstructions(
+  history: string[]
+): Promise<string[]> {
   const model = "gemini-2.5-flash";
 
-  // The system instruction sets the AI's role and tone for the entire interaction.
-  const systemInstruction = `You are a mischievous AI game master. Your task is to generate a single, tricky, and clever hint for a word. The hint must be:
-1. Unique and creative.
-2. Misleading: It should strongly suggest another word (the 'decoy word').
-3. Cleverly Subtlety: Despite being misleading, it must contain a subtle, indirect, and clever clue to the original word.
-4. Concise: The hint must be a single sentence or a very short phrase.
-Do not mention the decoy word, and do not reveal the original word. Only output the hint text.`;
+  // Create a structured list of the user's past prompts for the AI to analyze.
+  const historyText = history.map((h, i) => `${i + 1}. "${h}"`).join("\n");
 
-  // The prompt provides the necessary data (the word) for the AI to work with.
-  const prompt = `The original word is: ${originalWord}`;
+  // --- REVISED SYSTEM INSTRUCTION: Maximum Personalization ---
+  const systemInstruction = `You are a dedicated content curator focused on user retention. Your task is to first **analyze the user's history** to infer their top 2-3 general interest categories (e.g., 'Fantasy', 'Science', '80s Pop Culture').
+
+  Then, generate **6 new, highly personalized, and unique instruction suggestions**.
+
+  **Core Directive:** All 6 suggestions MUST be related to the user's inferred interests. Generate ideas that approach their favorite themes from new, varied angles to keep the game fresh, but do not introduce unrelated themes.
+
+  **Structure and Tone Constraints:**
+  1. **Theme Scope:** Each theme must be broad enough to generate a large variety of words (e.g., 'Mythology' is better than 'One Specific Book Title').
+  2. **Modification:** Each suggestion must combine the theme with a simple, fun hint modification (e.g., tone, style, or perspective).
+  3. **Language:** Use simple, common language and focus on popular concepts within their interest area.
+
+  **Example Output Structure (Heavily Aligned with User Interest):**
+  - **Fantasy creatures from Dungeons & Dragons** (if user likes fantasy) but the hints are just funny definitions.
+  - **Scientific terms used in space travel** (if user likes science) but the hints must use alliteration.
+  - **Character names from popular 80s movies** (if user likes 80s pop) but the hints must be written as dramatic movie quotes.
+  
+  **Constraints:**
+  1.  Each suggestion must be a single, short, clear sentence or phrase.
+  2.  Do not repeat any instructions from the provided history.
+  3.  Output ONLY a JSON array of 6 strings, where each string is a new instruction.`;
+
+  // The main prompt provides the necessary context.
+  const prompt = `Here is the user's history of past Hangman custom instructions:\n\n${historyText}\n\nAnalyze the user's interests and generate 6 new, highly personalized suggestions based on the instructions above.`;
+
+  // Define the output format using JSON Schema for an array of strings
+  const responseSchema = {
+    type: "array",
+    items: {
+      type: "string",
+      description:
+        "A short, highly personalized instruction for a Hangman word theme with a hint constraint.",
+    },
+  };
 
   try {
     const response = await ai.models.generateContent({
       model: model,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         systemInstruction: systemInstruction,
-        temperature: 0.8, // Higher temperature for more creative/less predictable results
+        responseMimeType: "application/json",
+        responseSchema: responseSchema,
+        temperature: 0.85, // Maintained for creative suggestions within constraints
       },
     });
 
-    // Extract the text from the response and clean up any potential leading/trailing whitespace
-    return response.text?.trim()!;
+    // Parse the JSON string output
+    const jsonString = response.text?.trim()!;
+    const suggestions = JSON.parse(jsonString) as string[];
+
+    // Ensure we return exactly 6
+    return suggestions.slice(0, 6);
   } catch (error) {
-    console.error("Error generating hangman hint:", error);
-    // Return a generic, safe hint in case of API failure
-    return `It has ${originalWord.length} letters. Think about the topic of ${originalWord}.`;
+    console.error("Error generating instruction suggestions:", error);
+    // Returning a mixed list as a fallback, as we can't infer taste without the API.
+    return [
+      "Words related to space exploration, hints must be told by an alien.",
+      "Common kitchen herbs and spices, hints must be simple rhymes.",
+      "Names of popular 90s TV shows, hints must use emojis only.",
+      "Types of footwear and shoes, hints must be sarcastic.",
+      "Abstract feeling words (e.g., anxiety, joy), hints must be definitions from a child.",
+      "Words with lots of vowels, hints must describe a movie plot poorly.",
+    ];
   }
 }
 
@@ -80,7 +116,7 @@ export async function generateHangmanWords(
         word: {
           type: "string",
           description:
-            "The secret word for the hangman game. Can be phrases or 2 to 3 words too. Must only contain alphabets and spaces.",
+            "The secret word for the hangman game. Can be phrases or 2 to 3 words too. Must only contain alphabets and spaces, strictly do not use special characters.",
         },
         hint: {
           type: "string",
