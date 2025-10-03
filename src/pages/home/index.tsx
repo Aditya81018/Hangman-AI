@@ -7,7 +7,7 @@ export default function HomePage() {
     <div className="flex flex-col gap-8 w-screen h-screen items-center justify-center">
       <div className="text-4xl">Hangman</div>
 
-      <div className="flex gap-4 max-md:flex-col">
+      <div className="flex gap-4 max-md:flex-col items-center">
         <Link to={"/game/easy"}>
           <Button size="lg" className="px-16">
             Easy
