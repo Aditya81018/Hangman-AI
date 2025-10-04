@@ -127,7 +127,7 @@ export async function generateHangmanWords(
         hint: {
           type: "string",
           description:
-            "A single, unique, creative, tricky, and clever hint. It must be misleading, suggesting a completely different concept, while still cleverly and subtlety hinting at the actual word. The hint should NOT make the word obvious.",
+            "A single, unique, creative, tricky, and clever hint. It must be misleading, while still cleverly and subtlety hinting at the actual word. The hint should NOT make the word obvious.",
         },
       },
       required: ["category", "word", "hint"],
@@ -144,7 +144,7 @@ export async function generateHangmanWords(
   **STRICT CONSTRAINTS:**
   1. **Uniqueness:** All 10 generated 'word' values must be unique and not present in the 'avoidWordsList'.
   2. **Content:** The 'word' field must *only* contain alphabets, numbers, and spaces. No punctuation or special characters.
-  3. **Hint:** The hint must be a **single, short, and misleading sentence/phrase** that suggests a decoy word but subtly links to the actual word. Do not state the decoy or actual word in the hint.`;
+  3. **Hint:** The hint must be a **single, short, and misleading sentence/phrase** that subtly links to the actual word. Do not state the actual word in the hint.`;
 
   const prompt = `Generate 10 words for a Hangman game.
   - **Word Theme/Type:** ${instructions}
