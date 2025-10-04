@@ -273,7 +273,7 @@ export default function GamePage() {
           <ArrowLeft />
         </Button>
       </Link>
-      <div className="w-screen h-screen p-8 flex flex-col justify-center max-lg:justify-start items-center gap-8 select-none">
+      <div className="w-screen h-screen p-8 flex flex-col justify-center max-lg:justify-start items-center gap-8 *:select-none">
         <div className="font-bold text-2xl text-center">Level {level}</div>
         <div className="flex gap-8 items-center justify-evenly lg:flex-row-reverse flex-col w-full">
           <Hangman hiddenParts={hiddenParts} />
