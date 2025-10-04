@@ -62,7 +62,7 @@ export default function GamePage() {
     if (wordBatch.length === 0) setIsLoading(true);
     try {
       const newWords = await generateHangmanWords(
-        `Set of unique and random words for hangman, the difficulty for the words and hints is ${difficulty}. ${instructions}`,
+        `Set of unique and random words for hangman, the difficulty of the words should be ${difficulty} for the following instructions. ${instructions}`,
         wordBatch.map((e) => e.word)
       );
       setWordBatch((words) => [...words, ...newWords]);
