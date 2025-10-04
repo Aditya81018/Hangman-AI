@@ -221,7 +221,9 @@ export default function HomePage() {
             instructionsFavorites.length === 0 && "hidden"
           )}
         >
-          <div className="font-bold">Favorites</div>
+          <div className="flex font-bold gap-2">
+            Favorites <Star className="text-primary size-4" />
+          </div>
 
           <div className="flex flex-col gap-2 w-full max-w-2xl h-full overflow-y-auto">
             {instructionsFavorites.map((instruction, index) => (
