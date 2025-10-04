@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { suggestCustomInstructions } from "@/services/genai";
-import { Loader2, Play, Send, Sparkles, Star, Trash, X } from "lucide-react";
+import { Loader2, Play, Sparkles, Star, Trash, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
