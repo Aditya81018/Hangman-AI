@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { suggestCustomInstructions } from "@/services/genai";
-import { Loader2, Play, Send, Sparkles, Star, Trash } from "lucide-react";
+import { Loader2, Play, Send, Sparkles, Star, Trash, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -137,14 +137,27 @@ export default function HomePage() {
     <div className="flex flex-col gap-8 w-screen h-screen items-center p-8 pt-32">
       <div className="text-8xl max-md:text-6xl playful">Hangman</div>
 
-      <Textarea
-        className="w-full max-w-2xl min-h-32"
-        placeholder="Enter custom instructions here."
-        onChange={(e) => setInstructions(e.target.value)}
-        value={instructions}
-        ref={textareaRef}
-      />
+      <div className="relative w-full max-w-2xl">
+        <Textarea
+          className="w-full min-h-32" // The Textarea should take full width of the wrapper
+          placeholder="Enter custom instructions here."
+          onChange={(e) => setInstructions(e.target.value)}
+          value={instructions}
+          ref={textareaRef}
+        >
+          {/* Optional: You may not need the Button inside Textarea component itself */}
+        </Textarea>
 
+        <Button
+          variant="outline"
+          size={"icon"}
+          onClick={() => setInstructions("")}
+          // New classes: absolute, bottom-2, right-2, z-10
+          className="absolute bottom-2 right-2 z-10 size-6"
+        >
+          <X className="size-3" />
+        </Button>
+      </div>
       <div className="flex gap-4 -my-4">
         <Button
           size={"sm"}
@@ -208,7 +221,7 @@ export default function HomePage() {
                   onClick={() => setInstructions(instruction)}
                   size="icon"
                 >
-                  <Send className="w-4 h-4" />
+                  <Play className="w-4 h-4" />
                 </Button>
               </div>
             ))}
@@ -229,14 +242,16 @@ export default function HomePage() {
             {instructionsFavorites.map((instruction, index) => (
               <div
                 key={index}
-                className="flex w-full justify-between gap-4 border-t-2 py-2"
+                className="flex w-full justify-between gap-4 border-t-2 pt-2 items-end"
               >
-                <div className="text-sm">{instruction}</div>
+                <div className="max-md:text-sm w-full self-center">
+                  {instruction}
+                </div>
                 <Button
                   onClick={() => handleDeleteFavClick(instruction)}
                   size="icon"
                   className="-mr-2"
-                  variant={"destructive"}
+                  variant={"outlineDestructive"}
                 >
                   <Trash className="w-4 h-4" />
                 </Button>
@@ -244,7 +259,7 @@ export default function HomePage() {
                   onClick={() => setInstructions(instruction)}
                   size="icon"
                 >
-                  <Send className="w-4 h-4" />
+                  <Play className="w-4 h-4" />
                 </Button>
               </div>
             ))}

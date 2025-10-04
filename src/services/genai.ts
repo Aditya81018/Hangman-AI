@@ -116,12 +116,12 @@ export async function generateHangmanWords(
         word: {
           type: "string",
           description:
-            "The secret word for the hangman game. Can be phrases or 2 to 3 words too. Must only contain alphabets, numbers and spaces, *strictly do not use any special characters*.",
+            "The secret word for the hangman game. Can be phrases or few words too. Must only contain alphabets, numbers and spaces, *strictly do not use words that are already used*.",
         },
         hint: {
           type: "string",
           description:
-            "You are mischievous, play and misdirect the user. Generate A single, unique, creative, tricky, and clever hint. It must be misleading, suggesting a different word, while still cleverly, subtlety and indirectly hinting at the actual word.",
+            "You are mischievous, play and misdirect the user. Generate A single, unique, creative, tricky, and clever hint. It must be misleading, suggesting a different word, while still cleverly, subtlety and indirectly hinting at the actual word. The hint shouldn't make the word obvious",
         },
       },
       required: ["category", "word", "hint"],
@@ -129,7 +129,7 @@ export async function generateHangmanWords(
   };
 
   // The comprehensive prompt and system instruction
-  const systemInstruction = `You are an mischievous expert word game generator. Your task is to generate an array of **10 unique word objects** in the specified JSON format. with each next word getting slightly more difficult. The word previously given are ${avoidWordsList.join(
+  const systemInstruction = `You are an mischievous expert word game generator. Your task is to generate an array of **10 unique word objects** in the specified JSON format. with each next word getting slightly more difficult. The word already used are ${avoidWordsList.join(
     ", "
   )}.
   
@@ -154,7 +154,12 @@ export async function generateHangmanWords(
 
     // The response text is a JSON string, which we must parse
     const jsonString = response.text?.trim()!;
-    return JSON.parse(jsonString) as HangmanWordObject[];
+    const json = JSON.parse(jsonString) as HangmanWordObject[];
+    json.forEach((obj) => {
+      obj.word = obj.word.replace(/[^a-zA-Z0-9\s]/g, "");
+    });
+
+    return json;
   } catch (error) {
     console.error("Error generating hangman word batch:", error);
     // Return an empty array or throw an error based on your game's needs

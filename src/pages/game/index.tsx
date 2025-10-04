@@ -6,7 +6,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 // import { getRandom } from "@/lib/helper";
 // import words from "@/data/words.json"; // REMOVE STATIC WORDS IMPORT
-import { ArrowLeft, Loader2, Star } from "lucide-react";
+import { ArrowLeft, Home, Loader2, RotateCcw, Star } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { generateHangmanWords } from "@/services/genai";
 
@@ -308,7 +308,16 @@ export default function GamePage() {
                     The word was:{" "}
                     <span className="font-bold">{originalWord}</span>
                   </div>
-                  <Button onClick={handleRestart}>Restart</Button>
+                  <div className="flex gap-4">
+                    <Link to="/">
+                      <Button>
+                        <Home /> Back to Home
+                      </Button>
+                    </Link>
+                    <Button variant={"secondary"} onClick={handleRestart}>
+                      <RotateCcw /> Restart
+                    </Button>
+                  </div>
                 </div>
               )
             )}
