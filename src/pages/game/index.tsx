@@ -273,7 +273,7 @@ export default function GamePage() {
           <ArrowLeft />
         </Button>
       </Link>
-      <div className="w-screen h-screen px-8 flex flex-col justify-evenly items-center gap-8">
+      <div className="w-screen h-screen p-8 flex flex-col justify-center max-lg:justify-start items-center gap-8">
         <div className="font-bold text-2xl text-center">Level {level}</div>
         <div className="flex gap-8 items-center justify-evenly lg:flex-row-reverse flex-col w-full">
           <Hangman hiddenParts={hiddenParts} />
@@ -293,7 +293,7 @@ export default function GamePage() {
               />
             ) : gameState === "won" ? (
               <div className="flex flex-col gap-4 items-center justify-center">
-                <div className="text-4xl font-bold uppercase">
+                <div className="text-4xl max-md:text-3xl font-bold uppercase">
                   YOU GUESSED IT! 🎉
                 </div>
                 <Button onClick={handleRestart}>Next Word</Button>
@@ -301,7 +301,7 @@ export default function GamePage() {
             ) : (
               gameState === "lost" && (
                 <div className="flex flex-col gap-4 items-center justify-center">
-                  <div className="text-4xl font-bold uppercase">
+                  <div className="text-4xl max-md:text-3xl font-bold uppercase">
                     GAME OVER! 💀
                   </div>
                   <div>
@@ -313,6 +313,7 @@ export default function GamePage() {
               )
             )}
           </div>
+          <br />
         </div>
 
         <Button
