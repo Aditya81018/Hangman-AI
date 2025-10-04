@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { suggestCustomInstructions } from "@/services/genai";
 import { Loader2, Play, Send, Sparkles, Star, Trash } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // Keys for localStorage
 const INSTRUCTIONS_INPUT_KEY = "hangman-custom-instructions-input";
