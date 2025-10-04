@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai/web";
 
-const GEMINI_API_KEY = "AIzaSyAMNwOyQXOLo43K88pLTrrqQAOOfTO8Iro";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
@@ -20,7 +20,7 @@ interface HangmanWordObject {
 export async function suggestCustomInstructions(
   history: string[]
 ): Promise<string[]> {
-  const model = "gemini-2.5-flash";
+  const model = "gemini-2.5-flash-lite";
 
   // Create a structured list of the user's past prompts for the AI to analyze.
   const historyText = history.map((h, i) => `${i + 1}. "${h}"`).join("\n");
@@ -101,7 +101,7 @@ export async function generateHangmanWords(
   instructions: string,
   avoidWordsList: string[]
 ): Promise<HangmanWordObject[]> {
-  const model = "gemini-2.5-flash";
+  const model = "gemini-2.5-flash-lite";
 
   // Define the output format using JSON Schema
   const responseSchema = {
