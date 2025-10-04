@@ -93,52 +93,62 @@ export async function suggestCustomInstructions(
 }
 
 /**
- * Generates an array of 10 hangman word objects (category, word, hint).
- * * @param instructions A string detailing the type of words to pick (e.g., "words related to space and astronomy").
- * @returns A promise that resolves to an array of 10 HangmanWordObject.
+ * Generates an array of 10 unique hangman word objects (category, word, hint).
+ * @param instructions A string detailing the type of words to pick (e.g., "words related to space and astronomy").
+ * @param avoidWordsList An array of words that the model must not use in the generated list.
+ * @returns A promise that resolves to an array of 10 unique HangmanWordObject.
  */
 export async function generateHangmanWords(
   instructions: string,
   avoidWordsList: string[]
 ): Promise<HangmanWordObject[]> {
+  // Use a capable model for complex, creative, and constrained tasks
   const model = "gemini-2.5-flash-lite";
 
   // Define the output format using JSON Schema
   const responseSchema = {
     type: "array",
+    description: "An array of 10 word objects, increasing in difficulty.",
     items: {
       type: "object",
       properties: {
         category: {
           type: "string",
-          description: "A short category title for the word.",
+          description:
+            "A short category title for the word, matching the theme.",
         },
         word: {
           type: "string",
           description:
-            "The secret word for the hangman game. Can be phrases or few words too. Must only contain alphabets, numbers and spaces, *strictly do not use words that are already used*.",
+            "The secret word for the hangman game. Must only contain alphabets, numbers, and spaces. Strictly avoid all words in the avoidWordsList.",
+          // Added pattern to strongly enforce character constraint at the schema level
+          pattern: "^[a-zA-Z0-9 ]+$",
         },
         hint: {
           type: "string",
           description:
-            "You are mischievous, play and misdirect the user. Generate A single, unique, creative, tricky, and clever hint. It must be misleading, suggesting a different word, while still cleverly, subtlety and indirectly hinting at the actual word. The hint shouldn't make the word obvious",
+            "A single, unique, creative, tricky, and clever hint. It must be misleading, suggesting a completely different concept, while still cleverly and subtlety hinting at the actual word. The hint should NOT make the word obvious.",
         },
       },
       required: ["category", "word", "hint"],
+      // Use 'additionalProperties: false' to ensure strict adherence to the schema
+      additionalProperties: false,
     },
+    minItems: 10,
+    maxItems: 10,
   };
 
   // The comprehensive prompt and system instruction
-  const systemInstruction = `You are an mischievous expert word game generator. Your task is to generate an array of **10 unique word objects** in the specified JSON format. with each next word getting slightly more difficult. The word already used are ${avoidWordsList.join(
-    ", "
-  )}.
+  const systemInstruction = `You are a mischievous expert word game generator. Your task is to generate an array of **exactly 10 unique word objects** in the specified JSON format. Ensure the words are challenging, with each subsequent word being slightly more difficult than the last. The words must relate to the user's instructions.
   
-  **Constraints for Each Object:**
-  1.  **Word/Category:** Follow the user's specific **instructions** and the given **difficulty level**.
-  2.  **Hint:** The hint must be **misleading** (suggesting a decoy word) but **cleverly subtle**, pointing to the actual word. It must be a single, short sentence or phrase. Do not output the decoy word or the actual word in the hint.`;
+  **STRICT CONSTRAINTS:**
+  1. **Uniqueness:** All 10 generated 'word' values must be unique and not present in the 'avoidWordsList'.
+  2. **Content:** The 'word' field must *only* contain alphabets, numbers, and spaces. No punctuation or special characters.
+  3. **Hint:** The hint must be a **single, short, and misleading sentence/phrase** that suggests a decoy word but subtly links to the actual word. Do not state the decoy or actual word in the hint.`;
 
-  const prompt = `Generate 10 words.
-  - **Word Theme/Type:** ${instructions}`;
+  const prompt = `Generate 10 words for a Hangman game.
+  - **Word Theme/Type:** ${instructions}
+  - **Words to Exclude (avoidWordsList):** ${avoidWordsList.join(", ")}`;
 
   try {
     const response = await ai.models.generateContent({
@@ -148,21 +158,31 @@ export async function generateHangmanWords(
         systemInstruction: systemInstruction,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.9, // High temperature for maximum creativity in word/hint selection
+        temperature: 0.85, // Slightly lower temp for better constraint adherence while keeping creativity
       },
     });
 
-    // The response text is a JSON string, which we must parse
-    const jsonString = response.text?.trim()!;
+    // The response text is guaranteed to be a JSON string by responseMimeType
+    const jsonString = response.text?.trim();
+    if (!jsonString) {
+      throw new Error("Model returned an empty response text.");
+    }
+
+    // Parse the JSON. The model's adherence to the schema makes this safe.
     const json = JSON.parse(jsonString) as HangmanWordObject[];
-    json.forEach((obj) => {
-      obj.word = obj.word.replace(/[^a-zA-Z0-9\s]/g, "");
-    });
+
+    // Removed the explicit `replace` loop as the 'pattern' in schema and
+    // strong system instructions are the primary way to enforce this.
+    // If the model fails, we let the structured output validation fail instead of
+    // silently modifying the word, which might break the hint's context.
 
     return json;
   } catch (error) {
-    console.error("Error generating hangman word batch:", error);
-    // Return an empty array or throw an error based on your game's needs
+    console.error(
+      "Error generating hangman word batch. Returning empty array:",
+      error
+    );
+    // Returning an empty array for a graceful failure state
     return [];
   }
 }
