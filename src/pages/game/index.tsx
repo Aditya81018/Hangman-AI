@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 // import { getRandom } from "@/lib/helper";
 // import words from "@/data/words.json"; // REMOVE STATIC WORDS IMPORT
 import { ArrowLeft, Home, Loader2, RotateCcw, Star } from "lucide-react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { generateHangmanWords } from "@/services/genai";
 
 // Define the type for the AI-generated word object
@@ -53,6 +58,7 @@ export default function GamePage() {
       localStorage.getItem(INSTRUCTIONS_FAVORITES_KEY) || "[]"
     ).includes(instructions)
   );
+  const navigate = useNavigate();
 
   /**
    * Function to call the AI for a new batch of words.
@@ -62,17 +68,18 @@ export default function GamePage() {
     if (wordBatch.length === 0) setIsLoading(true);
     try {
       const newWords = await generateHangmanWords(
-        `Set of unique and random words for hangman, the difficulty of the words should be ${difficulty} for the following instructions. ${instructions}`,
+        `Set of unique and random words for hangman. ${instructions}`,
+        difficulty,
         wordBatch.map((e) => e.word)
       );
+      if (newWords.length === 0) {
+        throw new Error("Failed to generate new words");
+      }
       setWordBatch((words) => [...words, ...newWords]);
     } catch (error) {
       console.error("Failed to generate words:", error);
       // Fallback: Set a single, simple word if API fails
-      setWordBatch((words) => [
-        ...words,
-        { category: "Fallback", word: "CODE", hint: "It runs everything." },
-      ]);
+      navigate("/error");
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +90,9 @@ export default function GamePage() {
     if (
       (level === 1 && wordBatch.length === 0) ||
       level === wordBatch.length - 3
-    )
+    ) {
       fetchNewWordBatch();
+    }
   }, [level, wordBatch]);
 
   // --- SECONDARY EFFECT: Set the game word when the batch/index changes ---

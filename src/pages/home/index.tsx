@@ -46,7 +46,10 @@ export default function HomePage() {
   useEffect(() => {
     (async () => {
       setInstructionsList([]);
-      const list = await suggestCustomInstructions(instructionsHistory);
+      const list = await suggestCustomInstructions(
+        instructionsHistory,
+        instructionsFavorites
+      );
       setInstructionsList(list);
     })();
   }, [instructionsHistory]);
@@ -83,7 +86,7 @@ export default function HomePage() {
           INSTRUCTIONS_HISTORY_KEY,
           JSON.stringify(limitedHistory)
         );
-        setInstructionsHistory(limitedHistory);
+        // setInstructionsHistory(limitedHistory);
       } catch (error) {
         console.error(
           "Failed to update instructions history in localStorage:",

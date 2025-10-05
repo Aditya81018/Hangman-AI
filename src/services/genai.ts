@@ -18,22 +18,29 @@ interface HangmanWordObject {
  * @returns A promise that resolves to a string array of 6 new instruction suggestions.
  */
 export async function suggestCustomInstructions(
-  history: string[]
+  history: string[],
+  favorites: string[]
 ): Promise<string[]> {
   const model = "gemini-2.5-flash-lite";
 
+  console.log("001");
+
   // Create a structured list of the user's past prompts for the AI to analyze.
   const historyText = history.map((h, i) => `${i + 1}. "${h}"`).join("\n");
+  const favoiteText = favorites
+    .slice(0, 6)
+    .map((f, i) => `${i + 1}. "${f}"`)
+    .join("\n");
 
   // --- REVISED SYSTEM INSTRUCTION: Maximum Personalization ---
-  const systemInstruction = `You are a dedicated content curator focused on user retention. Your task is to first **analyze the user's history** to infer their top 2-3 general interest categories (e.g., 'Fantasy', 'Science', '80s Pop Culture').
+  const systemInstruction = `You are a dedicated content curator focused on user retention. Your task is to first **analyze the user's history and user's favorites** to infer their top general interest categories.
 
   Then, generate **6 new, highly personalized, and unique instruction suggestions**.
 
   **Core Directive:** All 6 suggestions MUST be related to the user's inferred interests. Generate ideas that approach their favorite themes from new, varied angles to keep the game fresh, but do not introduce unrelated themes.
 
   **Structure and Tone Constraints:**
-  1. **Theme Scope:** Each theme must be broad enough to generate a large variety of words (e.g., 'Mythology' is better than 'One Specific Book Title').
+  1. **Theme Scope:** Each theme must be broad enough to generate a large variety of words.
   2. **Modification:** Each suggestion must combine the theme with a simple, fun hint modification (e.g., tone, style, or perspective).
   3. **Language:** Use simple, common language and focus on popular concepts within their interest area.
 
@@ -48,7 +55,7 @@ export async function suggestCustomInstructions(
   3.  Output ONLY a JSON array of 6 strings, where each string is a new instruction.`;
 
   // The main prompt provides the necessary context.
-  const prompt = `Here is the user's history of past Hangman custom instructions:\n\n${historyText}\n\nAnalyze the user's interests and generate 6 new, highly personalized suggestions based on the instructions above.`;
+  const prompt = `Here is the user's history of past Hangman custom instructions:\n\n${historyText}\n\nHere is the user's top 6 recent favorite Hangman custom instructions:\n\n${favoiteText}\n\nAnalyze the user's interests and generate 6 new, highly personalized suggestions based on the instructions above.`;
 
   // Define the output format using JSON Schema for an array of strings
   const responseSchema = {
@@ -95,15 +102,19 @@ export async function suggestCustomInstructions(
 /**
  * Generates an array of 10 unique hangman word objects (category, word, hint).
  * @param instructions A string detailing the type of words to pick (e.g., "words related to space and astronomy").
+ * @param difficulty A string indicating the difficulty level (e.g., "easy", "medium", "hard").
  * @param avoidWordsList An array of words that the model must not use in the generated list.
  * @returns A promise that resolves to an array of 10 unique HangmanWordObject.
  */
 export async function generateHangmanWords(
   instructions: string,
+  difficulty: string,
   avoidWordsList: string[]
 ): Promise<HangmanWordObject[]> {
   // Use a capable model for complex, creative, and constrained tasks
   const model = "gemini-2.5-flash-lite";
+
+  console.log("002");
 
   // Define the output format using JSON Schema
   const responseSchema = {
@@ -144,7 +155,17 @@ export async function generateHangmanWords(
   **STRICT CONSTRAINTS:**
   1. **Uniqueness:** All 10 generated 'word' values must be unique and not present in the 'avoidWordsList'.
   2. **Content:** The 'word' field must *only* contain alphabets, numbers, and spaces. No punctuation or special characters.
-  3. **Hint:** The hint must be a **single, short, and misleading sentence/phrase** that subtly links to the actual word. Do not state the actual word in the hint.`;
+  3. **Hint:** The hint must be a **single, short, and misleading sentence/phrase** that subtly links to the actual word. Do not state the actual word in the hint. **Crucially, the hint must be delivered with a playful, mischievous, and slightly theatrical tone to inject 'emotion and feel'.**
+  
+  The words must adhere to a target difficulty of **${difficulty.toUpperCase()}**.
+
+  **Difficulty Guidelines for ${difficulty.toUpperCase()}:**
+  - **EASY:** Words should be 3-7 letters, common, everyday vocabulary, and simple phrases.
+  - **MEDIUM:** Words should be 6-12 letters, moderately common, may include slightly obscure objects or compound words.
+  - **HARD:** Words should be 8-20 letters, often specialized terminology, proper nouns, complex phrases, or highly obscure words related to the theme.
+  
+  **Difficulty Ramp:** Ensure the 10 words gradually increase in complexity, with the first word being the easiest of the ${difficulty.toUpperCase()} range and the last word being the most difficult of the ${difficulty.toUpperCase()} range.
+  `;
 
   const prompt = `Generate 10 words for a Hangman game.
   - **Word Theme/Type:** ${instructions}
@@ -158,7 +179,7 @@ export async function generateHangmanWords(
         systemInstruction: systemInstruction,
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.85, // Slightly lower temp for better constraint adherence while keeping creativity
+        temperature: 0.9, // Slightly increased temp for more creative/emotional hints
       },
     });
 
@@ -170,11 +191,9 @@ export async function generateHangmanWords(
 
     // Parse the JSON. The model's adherence to the schema makes this safe.
     const json = JSON.parse(jsonString) as HangmanWordObject[];
-
-    // Removed the explicit `replace` loop as the 'pattern' in schema and
-    // strong system instructions are the primary way to enforce this.
-    // If the model fails, we let the structured output validation fail instead of
-    // silently modifying the word, which might break the hint's context.
+    json.forEach((obj) => {
+      obj.word = obj.word.replace(/[^a-zA-Z0-9\s]/g, "");
+    });
 
     return json;
   } catch (error) {
