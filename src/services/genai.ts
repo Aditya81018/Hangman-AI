@@ -112,7 +112,7 @@ export async function generateHangmanWords(
   avoidWordsList: string[]
 ): Promise<HangmanWordObject[]> {
   // Use a capable model for complex, creative, and constrained tasks
-  const model = "gemini-2.5-flash";
+  const model = "gemini-2.5-flash-lite";
 
   console.log("002");
 
