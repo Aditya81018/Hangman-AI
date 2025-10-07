@@ -27,7 +27,7 @@ export async function suggestCustomInstructions(
 
   // Create a structured list of the user's past prompts for the AI to analyze.
   const historyText = history.map((h, i) => `${i + 1}. "${h}"`).join("\n");
-  const favoiteText = favorites
+  const favoriteText = favorites
     .slice(0, 6)
     .map((f, i) => `${i + 1}. "${f}"`)
     .join("\n");
@@ -55,7 +55,7 @@ export async function suggestCustomInstructions(
   3.  Output ONLY a JSON array of 6 strings, where each string is a new instruction.`;
 
   // The main prompt provides the necessary context.
-  const prompt = `Here is the user's history of past Hangman custom instructions:\n\n${historyText}\n\nHere is the user's top 6 recent favorite Hangman custom instructions:\n\n${favoiteText}\n\nAnalyze the user's interests and generate 6 new, highly personalized suggestions based on the instructions above.`;
+  const prompt = `Here is the user's history of past Hangman custom instructions:\n\n${historyText}\n\nHere is the user's top 6 recent favorite Hangman custom instructions:\n\n${favoriteText}\n\nAnalyze the user's interests and generate 6 new, highly personalized suggestions based on the instructions above.`;
 
   // Define the output format using JSON Schema for an array of strings
   const responseSchema = {
@@ -112,7 +112,7 @@ export async function generateHangmanWords(
   avoidWordsList: string[]
 ): Promise<HangmanWordObject[]> {
   // Use a capable model for complex, creative, and constrained tasks
-  const model = "gemini-2.5-flash-lite";
+  const model = "gemini-2.5-flash";
 
   console.log("002");
 
