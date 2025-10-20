@@ -3,7 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { suggestCustomInstructions } from "@/services/genai";
-import { Loader2, Play, Sparkles, Star, Trash, X } from "lucide-react";
+import {
+  Loader2,
+  Play,
+  Sparkles,
+  Star,
+  Trash,
+  X,
+  RotateCw,
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,24 +19,44 @@ import { useNavigate } from "react-router-dom";
 const INSTRUCTIONS_INPUT_KEY = "hangman-custom-instructions-input";
 const INSTRUCTIONS_HISTORY_KEY = "hangman-custom-instructions-history";
 const INSTRUCTIONS_FAVORITES_KEY = "hangman-custom-instructions-favorites";
+const MAX_HISTORY_SIZE = 10;
+
+// Helper function to safely parse JSON from localStorage
+function getFromStorage<T>(key: string, defaultValue: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : defaultValue;
+  } catch (error) {
+    console.error(`Failed to parse ${key} from localStorage`, error);
+    return defaultValue;
+  }
+}
+
+// Helper function to safely stringify and set JSON to localStorage
+function saveToStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Failed to save ${key} to localStorage`, error);
+  }
+}
 
 export default function HomePage() {
   const [instructions, setInstructions] = useState(() => {
-    const saved = localStorage.getItem(INSTRUCTIONS_INPUT_KEY);
-    return saved || "";
+    // Input is plain text, not JSON, so we handle it separately
+    return localStorage.getItem(INSTRUCTIONS_INPUT_KEY) || "";
   });
-  const [instructionsHistory, setInstructionsHistory] = useState(() => {
-    const saved = localStorage.getItem(INSTRUCTIONS_HISTORY_KEY);
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [instructionsFavorites, setInstructionsFavorites] = useState<string[]>(
-    () => {
-      const saved = localStorage.getItem(INSTRUCTIONS_FAVORITES_KEY);
-      return saved ? JSON.parse(saved) : [];
-    }
+
+  const [instructionsHistory, setInstructionsHistory] = useState<string[]>(() =>
+    getFromStorage(INSTRUCTIONS_HISTORY_KEY, [])
   );
 
-  const [instructionsList, setInstructionsList] = useState<string[]>(() => []);
+  const [instructionsFavorites, setInstructionsFavorites] = useState<string[]>(
+    () => getFromStorage(INSTRUCTIONS_FAVORITES_KEY, [])
+  );
+
+  const [instructionsList, setInstructionsList] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
 
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
@@ -37,68 +65,106 @@ export default function HomePage() {
 
   const navigate = useNavigate();
 
-  // 2. Persist the current input to localStorage whenever it changes
+  const trimmedInstructions = instructions.trim();
+  const isCurrentInputFavorite =
+    instructionsFavorites.includes(trimmedInstructions);
+
+  // 1. Persist the current input to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem(INSTRUCTIONS_INPUT_KEY, instructions);
+    try {
+      localStorage.setItem(INSTRUCTIONS_INPUT_KEY, instructions);
+    } catch (error) {
+      console.error("Failed to save instructions input:", error);
+    }
     textareaRef.current?.focus();
   }, [instructions]);
 
+  // 2. Fetch suggestions ONLY on startup //
   useEffect(() => {
+    let isMounted = true;
+    setIsLoadingSuggestions(true);
+
     (async () => {
-      setInstructionsList([]);
+      try {
+        // Fetches using the state that was just initialized from localStorage
+        const list = await suggestCustomInstructions(
+          instructionsHistory,
+          instructionsFavorites
+        );
+        if (isMounted) {
+          setInstructionsList(list);
+        }
+      } catch (error) {
+        console.error("Failed to fetch suggestions:", error);
+        if (isMounted) {
+          setInstructionsList([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingSuggestions(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // <-- CRITICAL: Empty dependency array ensures this runs only on mount
+
+  // Manual fetch suggestions function
+  async function handleFetchSuggestions() {
+    setIsLoadingSuggestions(true);
+    try {
+      // Fetches using the CURRENT state
       const list = await suggestCustomInstructions(
         instructionsHistory,
         instructionsFavorites
       );
       setInstructionsList(list);
-    })();
-  }, [instructionsHistory]);
+    } catch (error) {
+      console.error("Failed to fetch suggestions:", error);
+      setInstructionsList([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  }
 
   /**
-   * Handles the click on the Custom button.
-   * Stores the used instruction into a history array in localStorage.
+   * Updates the instruction history in both state and localStorage.
+   */
+  function updateInstructionsHistory(instruction: string) {
+    if (!instruction) return; // Don't save empty strings
+
+    setInstructionsHistory((prevHistory) => {
+      // Ensure history is an array (paranoid check, good for robustness)
+      const history = Array.isArray(prevHistory) ? prevHistory : [];
+
+      // Add new instruction to the front, avoiding duplicates
+      const updatedHistory = [
+        instruction,
+        ...history.filter((item) => item !== instruction),
+      ];
+
+      const limitedHistory = updatedHistory.slice(0, MAX_HISTORY_SIZE);
+
+      saveToStorage(INSTRUCTIONS_HISTORY_KEY, limitedHistory);
+      return limitedHistory; // <-- CRITICAL FIX: Return new state
+    });
+  }
+
+  /**
+   * Handles the click on the main Play button.
+   * Stores the used instruction and navigates to the game.
    */
   function handleCustomClick() {
     const trimmedInstructions = instructions.trim();
-
-    if (trimmedInstructions) {
-      try {
-        // Load existing history
-        const historyJson = localStorage.getItem(INSTRUCTIONS_HISTORY_KEY);
-        let history: string[] = historyJson ? JSON.parse(historyJson) : [];
-
-        // Ensure history is an array
-        if (!Array.isArray(history)) {
-          history = [];
-        }
-
-        // Add the new instruction to the front, avoiding duplicates
-        const updatedHistory = [
-          trimmedInstructions,
-          ...history.filter((item) => item !== trimmedInstructions),
-        ];
-
-        // Optionally limit the history size (e.g., to 10 entries)
-        const limitedHistory = updatedHistory.slice(0, 10);
-
-        // Save the updated history
-        localStorage.setItem(
-          INSTRUCTIONS_HISTORY_KEY,
-          JSON.stringify(limitedHistory)
-        );
-        // setInstructionsHistory(limitedHistory);
-      } catch (error) {
-        console.error(
-          "Failed to update instructions history in localStorage:",
-          error
-        );
-      }
-    }
+    updateInstructionsHistory(trimmedInstructions);
 
     navigate(
       `/game/${difficulty}${
-        instructions !== ""
-          ? `?instructions=${encodeURIComponent(instructions.trim())}`
+        trimmedInstructions
+          ? `?instructions=${encodeURIComponent(trimmedInstructions)}`
           : ""
       }`
     );
@@ -110,12 +176,7 @@ export default function HomePage() {
     } else {
       setInstructionsFavorites((list) => {
         const newList = [instruction, ...list];
-
-        localStorage.setItem(
-          INSTRUCTIONS_FAVORITES_KEY,
-          JSON.stringify(newList)
-        );
-
+        saveToStorage(INSTRUCTIONS_FAVORITES_KEY, newList);
         return newList;
       });
     }
@@ -124,9 +185,7 @@ export default function HomePage() {
   function handleDeleteFavClick(instruction: string) {
     setInstructionsFavorites((list) => {
       const newList = list.filter((item) => item !== instruction);
-
-      localStorage.setItem(INSTRUCTIONS_FAVORITES_KEY, JSON.stringify(newList));
-
+      saveToStorage(INSTRUCTIONS_FAVORITES_KEY, newList);
       return newList;
     });
   }
@@ -137,30 +196,48 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-screen h-screen items-center p-8 pt-32">
+    // Use min-h-screen to prevent overflow issues on small viewports
+    <div className="relative flex flex-col gap-8 w-screen min-h-screen items-center p-8 pt-32">
+      {/* Moved ModeToggle to a more conventional top-right corner */}
+      <div className="absolute top-8 right-8">
+        <ModeToggle />
+      </div>
+
       <div className="text-8xl max-md:text-6xl playful">Hangman</div>
 
       <div className="relative w-full max-w-2xl">
         <Textarea
-          className="w-full min-h-32" // The Textarea should take full width of the wrapper
+          className="w-full min-h-32"
           placeholder="Enter custom instructions here."
           onChange={(e) => setInstructions(e.target.value)}
           value={instructions}
           ref={textareaRef}
+        />
+        <Button
+          variant={isCurrentInputFavorite ? "default" : "outline"}
+          size={"icon"}
+          onClick={() => handleAddFavClick(trimmedInstructions)}
+          disabled={!trimmedInstructions}
+          className="absolute bottom-2 right-10 z-10 size-6"
+          aria-label={
+            isCurrentInputFavorite
+              ? "Remove from favorites"
+              : "Add to favorites"
+          }
         >
-          {/* Optional: You may not need the Button inside Textarea component itself */}
-        </Textarea>
-
+          <Star className="size-3" />
+        </Button>
         <Button
           variant="outline"
           size={"icon"}
           onClick={() => setInstructions("")}
-          // New classes: absolute, bottom-2, right-2, z-10
           className="absolute bottom-2 right-2 z-10 size-6"
+          aria-label="Clear instructions"
         >
           <X className="size-3" />
         </Button>
       </div>
+
       <div className="flex gap-4 -my-4">
         <Button
           size={"sm"}
@@ -189,59 +266,95 @@ export default function HomePage() {
         <Play className="size-6" />
       </Button>
 
-      <div className="flex max-md:flex-col gap-4 max-md:mt-4 h-full w-full justify-center max-md:justify-start max-md:h-fit max-w-6xl">
-        <div className="w-full h-full border-2 rounded-md p-4">
-          <div className="font-bold flex gap-2">
-            Suggestions <Sparkles className="text-primary size-4" />
+      <div className="flex max-md:flex-col gap-4 max-md:mt-4 h-full w-full justify-center max-md:justify-start max-md:h-fit max-w-6xl pb-8">
+        <div className="w-full h-full border-2 rounded-md p-4 flex flex-col">
+          {/* Improved header with contextual "Clear History" button */}
+          <div className="font-bold flex gap-2 justify-between items-center mb-2">
+            <div className="flex gap-2 items-center">
+              Suggestions <Sparkles className="text-primary size-4" />
+              {/* --- ADDED REFRESH BUTTON --- */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleFetchSuggestions}
+                disabled={isLoadingSuggestions}
+                aria-label="Refresh suggestions"
+                className="size-6" // <-- ADDED
+              >
+                <RotateCw
+                  className={cn("size-4", isLoadingSuggestions && "hidden")}
+                />
+              </Button>
+            </div>
+            <Button
+              size={"sm"}
+              onClick={handleClearHistoryClick}
+              variant={"outlineDestructive"}
+              className={cn(instructionsHistory.length === 0 && "hidden")}
+            >
+              <Trash className="size-3 mr-1" /> Clear History
+            </Button>
           </div>
           <div className="flex flex-col gap-2 w-full h-full overflow-y-auto">
-            {instructionsList.length === 0 && (
+            {isLoadingSuggestions ? (
               <div className="flex justify-center items-center w-full h-full py-8">
                 <Loader2 className="animate-spin text-primary" />
               </div>
-            )}
-            {instructionsList.map((instruction, index) => (
-              <div
-                key={index}
-                className="flex w-full justify-between gap-4 border-t-2 pt-2 items-end"
-              >
-                <div className="max-md:text-sm w-full self-center">
-                  {instruction}
-                </div>
-                <Button
-                  onClick={() => handleAddFavClick(instruction)}
-                  size="icon"
-                  className="-mr-2"
-                  variant={
-                    instructionsFavorites.includes(instruction)
-                      ? "default"
-                      : "outline"
-                  }
-                >
-                  <Star className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={() => setInstructions(instruction)}
-                  size="icon"
-                >
-                  <Play className="w-4 h-4" />
-                </Button>
+            ) : instructionsList.length === 0 ? (
+              <div className="flex justify-center items-center w-full h-full py-8 text-sm text-muted-foreground">
+                No suggestions found.
               </div>
-            ))}
+            ) : (
+              instructionsList.map((instruction, index) => (
+                <div
+                  key={index}
+                  className="flex w-full justify-between gap-4 border-t-2 pt-2 items-end"
+                >
+                  <div className="max-md:text-sm w-full self-center">
+                    {instruction}
+                  </div>
+                  <Button
+                    onClick={() => handleAddFavClick(instruction)}
+                    size="icon"
+                    className="-mr-2"
+                    variant={
+                      instructionsFavorites.includes(instruction)
+                        ? "default"
+                        : "outline"
+                    }
+                    // Added accessibility label
+                    aria-label={
+                      instructionsFavorites.includes(instruction)
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                    }
+                  >
+                    <Star className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => setInstructions(instruction)}
+                    size="icon"
+                    aria-label="Use this instruction" // Added accessibility label
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
         <div
           className={cn(
-            "w-full h-full p-4 border-2 rounded-md",
+            "w-full h-full p-4 border-2 rounded-md flex flex-col", // Added flex flex-col
             instructionsFavorites.length === 0 && "hidden"
           )}
         >
-          <div className="flex font-bold gap-2">
+          <div className="font-bold flex gap-2 mb-2">
             Favorites <Star className="text-primary size-4" />
           </div>
 
-          <div className="flex flex-col gap-2 w-full max-w-2xl h-full overflow-y-auto">
+          <div className="flex flex-col gap-2 w-full h-full overflow-y-auto">
             {instructionsFavorites.map((instruction, index) => (
               <div
                 key={index}
@@ -255,12 +368,14 @@ export default function HomePage() {
                   size="icon"
                   className="-mr-2"
                   variant={"outlineDestructive"}
+                  aria-label="Remove from favorites" // Added accessibility label
                 >
                   <Trash className="w-4 h-4" />
                 </Button>
                 <Button
                   onClick={() => setInstructions(instruction)}
                   size="icon"
+                  aria-label="Use this instruction" // Added accessibility label
                 >
                   <Play className="w-4 h-4" />
                 </Button>
@@ -270,18 +385,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="w-full h-full max-w-6xl pb-8 flex justify-end">
-        <Button
-          size={"lg"}
-          className="w-fit"
-          onClick={handleClearHistoryClick}
-          variant={"destructive"}
-        >
-          <Trash /> Clear History
-        </Button>
-      </div>
-
-      <ModeToggle />
+      {/* Removed the old "Clear History" button and ModeToggle from the bottom */}
     </div>
   );
 }
