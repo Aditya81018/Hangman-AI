@@ -11,6 +11,7 @@ import {
   Trash,
   X,
   RotateCw,
+  Ban,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +20,9 @@ import { useNavigate } from "react-router-dom";
 const INSTRUCTIONS_INPUT_KEY = "hangman-custom-instructions-input";
 const INSTRUCTIONS_HISTORY_KEY = "hangman-custom-instructions-history";
 const INSTRUCTIONS_FAVORITES_KEY = "hangman-custom-instructions-favorites";
+const USED_WORDS_KEY = "hangman-used-words";
+const ADVANCE_AI_KEY = "hangman-settings-advance-ai"; // <-- ADDED
+const NO_REPEAT_KEY = "hangman-settings-no-repeat"; // <-- ADDED
 const MAX_HISTORY_SIZE = 10;
 
 // Helper function to safely parse JSON from localStorage
@@ -61,6 +65,15 @@ export default function HomePage() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
+  // --- MODIFIED: Load settings from localStorage ---
+  const [isAdvanceAI, setIsAdvanceAI] = useState(() => {
+    return getFromStorage(ADVANCE_AI_KEY, false);
+  });
+  const [cantRepeatWords, setCantRepeatWords] = useState(() => {
+    return getFromStorage(NO_REPEAT_KEY, false);
+  });
+  // --- END MODIFICATION ---
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const navigate = useNavigate();
@@ -78,6 +91,16 @@ export default function HomePage() {
     }
     textareaRef.current?.focus();
   }, [instructions]);
+
+  // --- ADDED: Persist settings to localStorage ---
+  useEffect(() => {
+    saveToStorage(ADVANCE_AI_KEY, isAdvanceAI);
+  }, [isAdvanceAI]);
+
+  useEffect(() => {
+    saveToStorage(NO_REPEAT_KEY, cantRepeatWords);
+  }, [cantRepeatWords]);
+  // --- END ADDED ---
 
   // 2. Fetch suggestions ONLY on startup //
   useEffect(() => {
@@ -162,9 +185,10 @@ export default function HomePage() {
     updateInstructionsHistory(trimmedInstructions);
 
     navigate(
-      `/game/${difficulty}${
+      `/game/${difficulty}?isAdvanceAI=${isAdvanceAI}&cantRepeatWords=${cantRepeatWords}${
+        // <-- MODIFIED to remove extra &
         trimmedInstructions
-          ? `?instructions=${encodeURIComponent(trimmedInstructions)}`
+          ? `&instructions=${encodeURIComponent(trimmedInstructions)}` // <-- ADDED & here
           : ""
       }`
     );
@@ -192,6 +216,7 @@ export default function HomePage() {
 
   function handleClearHistoryClick() {
     localStorage.removeItem(INSTRUCTIONS_HISTORY_KEY);
+    localStorage.removeItem(USED_WORDS_KEY);
     setInstructionsHistory([]);
   }
 
@@ -218,7 +243,7 @@ export default function HomePage() {
           size={"icon"}
           onClick={() => handleAddFavClick(trimmedInstructions)}
           disabled={!trimmedInstructions}
-          className="absolute bottom-2 right-10 z-10 size-6"
+          className="absolute bottom-2 right-10 z-10 size-6" // <-- MODIFIED position
           aria-label={
             isCurrentInputFavorite
               ? "Remove from favorites"
@@ -266,7 +291,36 @@ export default function HomePage() {
         <Play className="size-6" />
       </Button>
 
-      <div className="flex max-md:flex-col gap-4 max-md:mt-4 h-full w-full justify-center max-md:justify-start max-md:h-fit max-w-6xl pb-8">
+      <div className="flex gap-4 -mt-4 ">
+        <Button
+          size={"sm"}
+          variant={isAdvanceAI ? "default" : "outline"}
+          onClick={() => setIsAdvanceAI(!isAdvanceAI)}
+        >
+          <Sparkles
+            className={cn(
+              "text-primary size-4 mr-1", // <-- ADDED mr-1
+              isAdvanceAI && "text-white"
+            )}
+          />{" "}
+          Advance AI
+        </Button>
+        <Button
+          size={"sm"}
+          variant={cantRepeatWords ? "default" : "outline"}
+          onClick={() => setCantRepeatWords(!cantRepeatWords)}
+        >
+          <Ban
+            className={cn(
+              "text-primary size-4 mr-1", // <-- ADDED mr-1
+              cantRepeatWords && "text-white"
+            )}
+          />{" "}
+          No Repeating Words
+        </Button>
+      </div>
+
+      <div className="flex max-md:flex-col gap-4 h-full w-full justify-center max-md:justify-start max-md:h-fit max-w-6xl pb-8">
         <div className="w-full h-full border-2 rounded-md p-4 flex flex-col">
           {/* Improved header with contextual "Clear History" button */}
           <div className="font-bold flex gap-2 justify-between items-center mb-2">
@@ -282,7 +336,10 @@ export default function HomePage() {
                 className="size-6" // <-- ADDED
               >
                 <RotateCw
-                  className={cn("size-4", isLoadingSuggestions && "hidden")}
+                  className={cn(
+                    "size-4",
+                    isLoadingSuggestions && "animate-spin" // <-- MODIFIED
+                  )}
                 />
               </Button>
             </div>
@@ -290,7 +347,6 @@ export default function HomePage() {
               size={"sm"}
               onClick={handleClearHistoryClick}
               variant={"outlineDestructive"}
-              className={cn(instructionsHistory.length === 0 && "hidden")}
             >
               <Trash className="size-3 mr-1" /> Clear History
             </Button>
@@ -350,7 +406,7 @@ export default function HomePage() {
             instructionsFavorites.length === 0 && "hidden"
           )}
         >
-          <div className="font-bold flex gap-2 mb-2">
+          <div className="font-bold flex gap-2 mb-2 items-center">
             Favorites <Star className="text-primary size-4" />
           </div>
 
@@ -384,8 +440,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* Removed the old "Clear History" button and ModeToggle from the bottom */}
     </div>
   );
 }

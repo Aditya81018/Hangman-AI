@@ -1,3 +1,6 @@
+import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from "react";
+
 export type Parts =
   | "rope"
   | "face"
@@ -7,11 +10,11 @@ export type Parts =
   | "left-leg"
   | "right-leg";
 
-interface HangmanProps {
+interface HangmanProps extends HTMLAttributes<SVGElement> {
   hiddenParts?: Array<Parts>;
 }
 
-export default function Hangman({ hiddenParts }: HangmanProps) {
+export default function Hangman({ hiddenParts, className }: HangmanProps) {
   // Helper function to check if a part should be visible
   const isVisible = (id: string): boolean =>
     !hiddenParts?.includes(id as Parts);
@@ -23,7 +26,7 @@ export default function Hangman({ hiddenParts }: HangmanProps) {
         height="399"
         viewBox="0 0 261 399"
         // Note: I've added 'stroke-2' for better visibility on some parts that were otherwise hard to see
-        className="stroke-primary fill-none"
+        className={cn("stroke-primary fill-none", className)}
         strokeWidth="8"
         strokeLinecap="round"
         xmlns="http://www.w3.org/2000/svg"

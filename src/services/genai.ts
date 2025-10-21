@@ -109,10 +109,11 @@ export async function suggestCustomInstructions(
 export async function generateHangmanWords(
   instructions: string,
   difficulty: string,
+  isAdvanceAI: boolean,
   avoidWordsList: string[]
 ): Promise<HangmanWordObject[]> {
   // Use a capable model for complex, creative, and constrained tasks
-  const model = "gemini-2.5-flash-lite";
+  const model = isAdvanceAI ? "gemini-2.5-flash" : "gemini-2.5-flash-lite";
 
   console.log("002");
 
