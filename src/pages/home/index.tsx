@@ -228,7 +228,7 @@ export default function HomePage() {
         <ModeToggle />
       </div>
 
-      <div className="text-8xl max-md:text-6xl playful">Hangman</div>
+      <div className="text-8xl max-md:text-6xl playful">Hangman AI</div>
 
       <div className="relative w-full max-w-2xl">
         <Textarea
