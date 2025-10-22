@@ -44,6 +44,7 @@ This system completely masks the AI's generation latency, creating a fast, unint
 * **Routing:** React Router DOM
 * **Styling:** Tailwind CSS
 * **UI Components:** shadcn/ui
+* **Icons:** Lucide Icons
 * **AI:** Google Gemini AI (via the `@google/generative-ai` SDK)
 * **State & Storage:** React Context & `localStorage`
 
