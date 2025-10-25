@@ -71,9 +71,7 @@ This system completely masks the AI's generation latency, creating a fast, unint
 
 4.  **Run the development server:**
     ```bash
-    npm run dev
-    # or
-    yarn dev
+    pnpm dev
     ```
 
 5.  Open `http://localhost:5173` (or the port specified in your console) in your browser.
